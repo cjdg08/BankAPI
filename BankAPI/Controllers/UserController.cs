@@ -20,102 +20,95 @@ namespace BankAPI.Controllers
             this.iUserBusiness = iUserBusiness;
         }
 
+        /*
+         * 
+         */
+
         [HttpPost]
         [Route("api/AddUser")]
         public IHttpActionResult AddUser([FromBody] UserVM user)
         {
             try
             {
-                // VALIDATE REQUEST BODY HERE
+                // VALIDATE REQUEST BODY
                 HttpStatusCode errCode;
-                if (user == null)
+                if (user == null) // IF NO REQUEST BODY PROVIDED, RETURN 400 BAD REQUEST STATUS CODE WITH "Request body not found." MESSAGE
                 {
                     errCode = (HttpStatusCode)400;
                     return Content(errCode, "Request body not found.");
                 }
                 if (String.IsNullOrEmpty(user.BankAccountNumber))
                 {
-                    errCode = (HttpStatusCode)422;
-                    return Content(errCode, "Bank Account Number is required.");
+                    return Ok("Bank Account Number is required.");
                 }
                 else
                 {
                     if(Regex.Matches(user.BankAccountNumber, @"^[0-9]+$").Count <= 0)
                     {
-                        errCode = (HttpStatusCode)422;
-                        return Content(errCode, "Bank Account Number is invalid.");
+                        return Ok("Bank Account Number is invalid.");
                     }
                 }
                 if (String.IsNullOrEmpty(user.CardNumber))
                 {
-                    errCode = (HttpStatusCode)422;
-                    return Content(errCode, "Card Number is required.");
+                    return Ok("Card Number is required.");
                 }
                 else
                 {
                     if (Regex.Matches(user.CardNumber, @"^[0-9]+$").Count <= 0)
                     {
-                        errCode = (HttpStatusCode)422;
-                        return Content(errCode, "Card Number is invalid.");
+                        return Ok("Card Number is invalid.");
                     }
                 }
                 if (user.ExpiryDate == null || user.ExpiryDate == DateTime.Parse("01/01/0001"))
                 {
-                    errCode = (HttpStatusCode)422;
-                    return Content(errCode, "Expiry Date is required.");
+                    return Ok("Expiry Date is required.");
                 }
                 if (String.IsNullOrEmpty(user.FirstName))
                 {
-                    errCode = (HttpStatusCode)422;
-                    return Content(errCode, "First Name is required.");
+                    return Ok("First Name is required.");
                 }
                 if (String.IsNullOrEmpty(user.LastName))
                 {
-                    errCode = (HttpStatusCode)422;
-                    return Content(errCode, "Last Name is required.");
+                    return Ok("Last Name is required.");
                 }
                 if (String.IsNullOrEmpty(user.MiddleName))
                 {
-                    errCode = (HttpStatusCode)422;
-                    return Content(errCode, "Middle Name is required.");
+                    return Ok("Middle Name is required.");
                 }
                 if (String.IsNullOrEmpty(user.PIN))
                 {
-                    errCode = (HttpStatusCode)422;
-                    return Content(errCode, "PIN is required.");
+                    return Ok("PIN is required.");
                 }
                 else
                 {
                     if (Regex.Matches(user.PIN, @"^[0-9]+$").Count <= 0)
                     {
-                        errCode = (HttpStatusCode)422;
-                        return Content(errCode, "PIN is invalid.");
+                        return Ok("PIN is invalid.");
                     }
                 }
 
-                // CALL METHOD TO GET USERS DATA AND VALIDATE IF EXISTING
+                // CALL METHOD TO GET USER DATA BY BANK ACCOUNT NUMBER
                 var users = iUserBusiness.GetUsersByBankAccountNumber(user.BankAccountNumber);
-                if(users != null)
+                if(users != null) // CHECK IF NO RETURN DATA, RETURN "Bank Account Number already exist." MESSAGE
                 {
-                    errCode = (HttpStatusCode)400;
-                    return Content(errCode, "Bank Account Number already exist.");
+                    return Ok("Bank Account Number already exist.");
                 }
 
+                // CALL METHOD TO GET USER DATA BY CARD NUMBER
                 users = iUserBusiness.GetUsersByCardNumber(user.CardNumber);
-                if (users!= null)
+                if (users != null) // CHECK IF NO RETURN DATA, RETURN "Card Number already exist." MESSAGE
                 {
-                    errCode = (HttpStatusCode)400;
-                    return Content(errCode, "Card Number already exist.");
+                    return Ok("Card Number already exist.");
                 }
 
-                // CALL METHOD TO INSERT DATA TO TABLE
+                // CALL METHOD TO INSERT DATA TO TABLE AND RETURN CREATED ID
                 user.ID = iUserBusiness.InsertUser(user);
 
-                if (user.ID > 0)
+                if (user.ID > 0) // IF CREATED ID IS GREATER THAN ZERO, RETURN "User successfully saved!" MESSAGE
                 {
                     return Ok("User successfully saved!");
                 }
-                else
+                else // IF NO CREATED ID, RETURN 500 STATUS CODE WITH "Error saving information" MESSAGE
                 {
                     errCode = (HttpStatusCode)500;
                     return Content(errCode, "Error saving information");

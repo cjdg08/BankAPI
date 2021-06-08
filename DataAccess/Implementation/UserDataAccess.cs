@@ -98,7 +98,7 @@ namespace DataAccess.Implementation
                         tran.Rollback();
                     }
                 }
-                con.Open();
+                con.Close();
 
                 return user.ID;
             }
